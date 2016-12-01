@@ -1,0 +1,16 @@
+{
+"Resources": {
+  "Nestedprateek":
+  {
+    "Type" : "AWS::CloudFormation::Stack",
+     "Properties" : {
+       "TemplateURL" : "https://s3.amazonaws.com/cfprateek/sg_prateek.json",
+       "Parameters":{
+         "VPC" : "vpc-cf2215ab",
+         "SGName": "sgprateek2"
+       }
+     }
+  }
+
+}
+}

@@ -1,0 +1,103 @@
+{
+"Mappings" : {
+    "AWSRegionArch2AMI" : {
+      "us-east-1"      : { "64" : "ami-40d28157" }
+    }
+  },
+
+
+"Resources":{
+  "Child1vpc": {
+      "Type": "AWS::CloudFormation::Stack",
+      "Properties": {
+          "TemplateURL": "https://s3.amazonaws.com/cfprateek/child1_vpc.json",
+          "TimeoutInMinutes": "60"
+      }
+  },
+
+  "PublicFacingELB": {
+    "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+    "Properties": {
+      "AvailabilityZones": {
+        "Fn::GetAZs": "us-east-1"
+      },
+      "Listeners": [
+        {
+          "LoadBalancerPort": "8080",
+          "InstancePort": "8080",
+          "Protocol": "HTTP"
+        }
+      ],
+      "HealthCheck": {
+        "Target": "TCP:8080",
+        "HealthyThreshold": "3",
+        "UnhealthyThreshold": "5",
+        "Interval": "30",
+        "Timeout": "5"
+
+      }
+    }
+  },
+
+  "PrivateFacingELB": {
+    "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+    "Properties": {
+      "AvailabilityZones": {
+        "Fn::GetAZs": "us-east-1"
+      },
+      "Listeners": [
+        {
+          "LoadBalancerPort": "8080",
+          "InstancePort": "8080",
+          "Protocol": "HTTP"
+        }
+      ],
+      "HealthCheck": {
+        "Target": "TCP:8080",
+        "HealthyThreshold": "3",
+        "UnhealthyThreshold": "5",
+        "Interval": "30",
+        "Timeout": "5"
+
+      }
+    }
+  },
+
+  "PublicFacingAutoScaling": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "Properties": {
+        "AvailabilityZones": {
+          "Fn::GetAZs": "us-east-1a"
+        },
+
+        "VPCZoneIdentifier" : [{ "Fn::GetAtt" : [ "Child1vpc", "Outputs.PublicSubnetID" ] }],
+        "LoadBalancerNames" : [ { "Ref" : "PublicFacingELB" } ],
+        "LaunchConfigurationName": {
+          "Ref": "PublicFacingLaunchConf"
+        },
+        "HealthCheckGracePeriod": "300",
+        "MinSize": "0",
+        "MaxSize": "0",
+        "DesiredCapacity" : "0",
+        "Tags" : [ {"Key": "Name", "Value": "pmtest", "PropagateAtLaunch" : "true" }]
+      },
+      "DependsOn": [
+        "PublicFacingLaunchConf",
+        "PublicFacingELB"
+      ]
+    },
+
+    "PublicFacingLaunchConf": {
+      "Type": "AWS::AutoScaling::LaunchConfiguration",
+      "Properties": {
+        "InstanceType": "t2.micro",
+        "KeyName": "prateek-test",
+        "ImageId": "ami-40d28157"
+      },
+
+    }
+
+},
+
+
+}
